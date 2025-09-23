@@ -1,0 +1,127 @@
+{% extends "base.html" %} {% block title %}Results — LungProfilaxe{% endblock %}
+{% block content %}
+<section class="results-layout">
+  <article class="results-card">
+    <h1>Risk assessment complete</h1>
+    <p class="results-subtitle">
+      Based on your responses, here is the current projection of your lung
+      cancer risk profile.
+    </p>
+    {% set risk_class = 'risk-badge--low' %} {% if outcome == 'Medium' %} {% set
+    risk_class = 'risk-badge--medium' %} {% elif outcome == 'High' %} {% set
+    risk_class = 'risk-badge--high' %} {% endif %}
+    <div class="risk-badge {{ risk_class }}">Current level: {{ outcome }}</div>
+
+    <div class="progress-group" aria-label="Risk probabilities">
+      <div>
+        <div class="progress-label">
+          <span>Low risk</span>
+          <span>{{ percent_low }}%</span>
+        </div>
+        <div
+          class="progress"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="{{ percent_low }}"
+        >
+          <div
+            class="progress-bar progress-bar--low"
+            style="width: {{ percent_low }}%"
+          ></div>
+        </div>
+      </div>
+      <div>
+        <div class="progress-label">
+          <span>Medium risk</span>
+          <span>{{ percent_medium }}%</span>
+        </div>
+        <div
+          class="progress"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="{{ percent_medium }}"
+        >
+          <div
+            class="progress-bar progress-bar--medium"
+            style="width: {{ percent_medium }}%"
+          ></div>
+        </div>
+      </div>
+      <div>
+        <div class="progress-label">
+          <span>High risk</span>
+          <span>{{ percent_high }}%</span>
+        </div>
+        <div
+          class="progress"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="{{ percent_high }}"
+        >
+          <div
+            class="progress-bar progress-bar--high"
+            style="width: {{ percent_high }}%"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <a class="btn btn-secondary" href="{{ url_for('form') }}"
+        >Retake assessment</a
+      >
+      {% if patient_id %}
+      <a
+        class="btn btn-outline"
+        href="{{ url_for('history', patient_id=patient_id) }}"
+        >View my history</a
+      >
+      <a
+        class="btn btn-ghost"
+        href="{{ url_for('download_pdf', patient_id=patient_id) }}"
+        >Download PDF</a
+      >
+      {% endif %}
+    </div>
+  </article>
+
+  {% if advice %}
+  <aside class="advice-card">
+    <h2>Personal recommendations</h2>
+    <p class="results-subtitle" style="margin-bottom: 16px">
+      These tips are generated from the most prominent risk contributors in your
+      answers.
+    </p>
+    <ul>
+      {% for item in advice %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </aside>
+  {% endif %}
+
+  <aside class="advice-card" style="background: rgba(37, 99, 235, 0.08)">
+    <h2>Take a mindful pause</h2>
+    <p>
+      Feeling anxious? Explore calming breathing sessions curated for lung
+      health advocates.
+      <a
+        href="https://www.youtube.com/results?search_query=guided+breathing+exercises"
+        target="_blank"
+        rel="noopener"
+        >Open breathing exercises</a
+      >
+      or learn directly from
+      <a
+        href="https://www.youtube.com/@cancerdocadem/featured"
+        target="_blank"
+        rel="noopener"
+        >Dr Adem&rsquo;s channel</a
+      >.
+    </p>
+  </aside>
+</section>
+{% endblock %}

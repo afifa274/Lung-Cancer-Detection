@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="a" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="b" x1="30%" x2="70%" y1="20%" y2="80%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.85" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#a)" />
+  <path
+    d="M20 18c8-6 20-6 28 0 3 2 5 5 5 8s-2 6-5 8c3 2 5 5 5 8s-2 6-5 8c-8 6-20 6-28 0-3-2-5-5-5-8s2-6 5-8c-3-2-5-5-5-8s2-6 5-8z"
+    fill="url(#b)"
+  />
+  <text
+    x="32"
+    y="38"
+    text-anchor="middle"
+    font-family="'Manrope', 'Segoe UI', sans-serif"
+    font-size="18"
+    font-weight="700"
+    fill="#f8fafc"
+  >LA</text>
+</svg>

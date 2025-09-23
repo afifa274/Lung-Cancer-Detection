@@ -1,0 +1,83 @@
+{% extends "base.html" %} {% block title %}LungAware — Lung Cancer Risk
+Assistant{% endblock %} {% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="hero-eyebrow">Early insights</p>
+    <h1>Understand your lung health with confidence</h1>
+    <p>
+      Answer a few quick questions and receive an instant overview of the
+      factors that may influence your lung cancer risk. We translate clinical
+      predictions into a clear, human tone so you can take the next step with
+      clarity.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="{{ url_for('form') }}"
+        >Start assessment</a
+      >
+      <a class="btn btn-ghost" href="#how-it-works">How it works</a>
+    </div>
+  </div>
+  <div class="hero-card">
+    <h2>What you receive</h2>
+    <div class="hero-stat-grid">
+      <div class="hero-stat">
+        <span>Risk profile</span>
+        <strong>Low · Medium · High</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Confidence</span>
+        <strong>Detailed probabilities</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Guidance</span>
+        <strong>Personalised advice</strong>
+      </div>
+    </div>
+    <p class="section-description" style="margin-top: 24px">
+      Your answers remain private and are only used to create your personal risk
+      summary. You can download a PDF copy or revisit your past results at any
+      time.
+    </p>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <h2 class="section-title">How LungProfilaxe supports you</h2>
+  <p class="section-description">
+    Built with medical datasets and refined machine learning models,
+    LungProfilaxe balances accuracy with empathy. Every interaction keeps you
+    informed while reinforcing that this is not a substitute for professional
+    care.
+  </p>
+  <div class="feature-grid">
+    <article class="feature-card">
+      <h3>Human-friendly language</h3>
+      <p>
+        Technical insights are rewritten in clear, supportive wording so every
+        recommendation feels understandable and actionable.
+      </p>
+    </article>
+    <article class="feature-card">
+      <h3>Probability first</h3>
+      <p>
+        Instead of a single label, you see the likelihood of each risk level,
+        allowing for richer conversations with healthcare professionals.
+      </p>
+    </article>
+    <article class="feature-card">
+      <h3>Personal history</h3>
+      <p>
+        Opt in to save assessments and trace how your lifestyle changes shape
+        your results over time.
+      </p>
+    </article>
+    <article class="feature-card">
+      <h3>Downloadable report</h3>
+      <p>
+        Export your summary as a polished PDF to share with clinicians, family
+        members, or to keep for your records.
+      </p>
+    </article>
+  </div>
+</section>
+{% endblock %}

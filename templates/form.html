@@ -1,0 +1,172 @@
+{% extends "base.html" %} {% block title %}Assessment — LungProfilaxe{% endblock
+%} {% block content %}
+<section class="card form-card">
+  <div>
+    <h1>Your personalised lung health snapshot</h1>
+    <p>
+      Provide details about your lifestyle and current symptoms. The score for
+      each factor ranges from <strong>1 (very low)</strong> to
+      <strong>9 (very high)</strong>. The more accurate your answers, the more
+      tailored the guidance will be.
+    </p>
+  </div>
+  <form method="POST" action="{{ url_for('results') }}" novalidate>
+    <div class="form-section">
+      <h2>Identity</h2>
+      <div class="form-grid">
+        <div
+          class="input-group"
+          role="radiogroup"
+          aria-labelledby="share-label"
+        >
+          <span class="input-label" id="share-label"
+            >Would you like to record your name?</span
+          >
+          <div class="radio-group">
+            <label class="radio-pill">
+              <input
+                type="radio"
+                id="share_yes"
+                name="share_name"
+                value="yes"
+                checked
+              />
+              Yes
+            </label>
+            <label class="radio-pill">
+              <input type="radio" id="share_no" name="share_name" value="no" />
+              No
+            </label>
+          </div>
+          <p class="input-description">
+            Saved names appear in your history to make follow-up easier. Choose
+            “No” to stay anonymous.
+          </p>
+        </div>
+        <div class="input-group" id="name_field">
+          <label class="input-label" for="patient_name">Your name</label>
+          <input
+            class="input-control"
+            type="text"
+            name="patient_name"
+            id="patient_name"
+            maxlength="100"
+            placeholder="Optional"
+          />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="age">Age</label>
+          <input
+            class="input-control"
+            type="number"
+            name="age"
+            id="age"
+            min="0"
+            max="120"
+            required
+            value="30"
+          />
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="gender">Gender</label>
+          <select class="input-control" name="gender" id="gender" required>
+            <option value="" disabled>Select gender</option>
+            <option value="male" selected>Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Lifestyle &amp; Environment</h2>
+      <p class="input-description">
+        Score each factor by how strongly it applies to you, where 1 is minimal
+        and 9 is severe or very frequent.
+      </p>
+      <div class="form-grid">
+        {% set lifestyle_fields = [ ('air_pollution', 'Air pollution exposure'),
+        ('alcohol_use', 'Alcohol use'), ('dust_allergy', 'Dust allergy'),
+        ('occupational_hazards', 'Occupational hazards'), ('genetic_risk',
+        'Family history / genetic risk'), ('chronic_lung_disease', 'Chronic lung
+        disease'), ('balanced_diet', 'Balanced diet'), ('obesity', 'Obesity'),
+        ('smoking', 'Smoking'), ('passive_smoker', 'Passive smoker exposure') ]
+        %} {% for field, label in lifestyle_fields %}
+        <div class="input-group">
+          <label class="input-label" for="{{ field }}">{{ label }}</label>
+          <input
+            class="input-control"
+            type="number"
+            name="{{ field }}"
+            id="{{ field }}"
+            min="1"
+            max="9"
+            required
+            value="1"
+          />
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2>Symptoms &amp; Observations</h2>
+      <div class="form-grid">
+        {% set symptom_fields = [ ('chest_pain', 'Chest pain'),
+        ('coughing_blood', 'Coughing blood'), ('fatigue', 'Fatigue'),
+        ('weight_loss', 'Unintentional weight loss'), ('shortness_of_breath',
+        'Shortness of breath'), ('wheezing', 'Wheezing'),
+        ('swallowing_difficulty', 'Difficulty swallowing'), ('clubbing',
+        'Clubbing of fingernails'), ('frequent_cold', 'Frequent colds'),
+        ('dry_cough', 'Persistent dry cough'), ('snoring', 'Snoring intensity')
+        ] %} {% for field, label in symptom_fields %}
+        <div class="input-group">
+          <label class="input-label" for="{{ field }}">{{ label }}</label>
+          <input
+            class="input-control"
+            type="number"
+            name="{{ field }}"
+            id="{{ field }}"
+            min="1"
+            max="9"
+            required
+            value="1"
+          />
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <input type="submit" value="Generate my insights" />
+    </div>
+  </form>
+</section>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggleNameField = () => {
+      const shareName = document.querySelector(
+        'input[name="share_name"]:checked'
+      );
+      const nameField = document.getElementById("name_field");
+      if (!shareName || !nameField) {
+        return;
+      }
+      nameField.style.display = shareName.value === "yes" ? "block" : "none";
+      if (shareName.value === "no") {
+        const input = nameField.querySelector("input");
+        if (input) {
+          input.value = "";
+        }
+      }
+    };
+
+    document.querySelectorAll('input[name="share_name"]').forEach((el) => {
+      el.addEventListener("change", toggleNameField);
+    });
+
+    toggleNameField();
+  });
+</script>
+{% endblock %}

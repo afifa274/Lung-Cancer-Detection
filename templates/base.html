@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      {% block title %}LungProfilaxe — Lung Cancer Risk Assistant{% endblock %}
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main.css') }}"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="{{ url_for('static', filename='images/favicon.svg') }}"
+    />
+    {% block head_extra %}{% endblock %}
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    <div class="page-shell">
+      <header class="site-header">
+        <div class="header-inner">
+          <a class="brand" href="{{ url_for('home') }}">LungProfilaxe</a>
+          <nav class="nav-links" aria-label="Primary">
+            <a
+              href="{{ url_for('home') }}"
+              class="nav-link {% if request.path == url_for('home') %}is-active{% endif %}"
+              >Home</a
+            >
+            <a
+              href="{{ url_for('form') }}"
+              class="nav-link {% if request.path == url_for('form') %}is-active{% endif %}"
+              >Assessment</a
+            >
+            {% if request.endpoint == 'history' and patient_id is defined and
+            patient_id %}
+            <a
+              href="{{ url_for('history', patient_id=patient_id) }}"
+              class="nav-link is-active"
+              >History</a
+            >
+            {% endif %}
+          </nav>
+        </div>
+      </header>
+      <main class="page-content">{% block content %}{% endblock %}</main>
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <p class="disclaimer">
+            The LungProfilaxe assessment offers educational insights and should
+            not replace personalised medical advice. For urgent health concerns,
+            please consult your doctor.
+          </p>
+          <p class="footer-note">Stay proactive, stay informed.</p>
+        </div>
+      </footer>
+    </div>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

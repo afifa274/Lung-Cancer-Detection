@@ -1,0 +1,93 @@
+{% extends "base.html" %} {% block title %}History — {{ patient_id }}{% endblock
+%} {% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %} {% block content %}
+<section class="history-card">
+  <h1>Assessment history for {{ patient_id }}</h1>
+  {% if results %}
+
+  <div class="history-table-wrapper" role="region" aria-live="polite">
+    <div class="history-table-scroll">
+      <table class="history-table">
+        <thead>
+          <tr>
+            {% for key in results[0].keys() %}
+            <th>{{ key }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in results %}
+          <tr>
+            {% for value in row.values() %}
+            <td>{{ value }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="chart-card" role="img" aria-labelledby="riskChartLabel">
+    <span id="riskChartLabel" class="visually-hidden"
+      >Trend of assessed lung cancer risk levels</span
+    >
+    <canvas id="riskChart"></canvas>
+  </div>
+  {% else %}
+  <p class="empty-state">
+    No saved assessments were found for this identifier.
+  </p>
+  {% endif %}
+  <div class="history-actions">
+    <a class="btn btn-secondary" href="{{ url_for('form') }}">New assessment</a>
+    <a class="btn btn-outline" href="{{ url_for('home') }}">Return home</a>
+  </div>
+</section>
+{% endblock %} {% block scripts %} {% if results %}
+<script>
+  const labels = [
+    {% for row in results %}
+      "{{ loop.index }}",
+    {% endfor %}
+  ];
+  const data = [
+    {% for row in results %}
+      {{ 100 if row['Level'] == 'High' else (50 if row['Level'] == 'Medium' else 0) }},
+    {% endfor %}
+  ];
+  const ctx = document.getElementById('riskChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Risk level (0 = Low, 50 = Medium, 100 = High)',
+            data,
+            borderColor: 'rgb(37, 99, 235)',
+            backgroundColor: 'rgba(37, 99, 235, 0.18)',
+            tension: 0.32,
+            fill: true,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            suggestedMin: 0,
+            suggestedMax: 100,
+            ticks: {
+              stepSize: 25
+            }
+          }
+        }
+      }
+    });
+  }
+</script>
+{% endif %} {% endblock %}
