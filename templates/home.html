@@ -1,19 +1,18 @@
-{% extends "base.html" %} {% block title %}LungAware — Lung Cancer Risk
-Assistant{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Lung Cancer Detection — Lung Cancer Risk Assistant{% endblock %}
+{% block content %}
 <section class="hero">
   <div class="hero-copy">
-    <p class="hero-eyebrow">Early insights</p>
+    <p class="hero-eyebrow">AI-powered early insights</p>
     <h1>Understand your lung health with confidence</h1>
     <p>
       Answer a few quick questions and receive an instant overview of the
       factors that may influence your lung cancer risk. We translate clinical
-      predictions into a clear, human tone so you can take the next step with
+      predictions into clear, human language so you can take the next step with
       clarity.
     </p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="{{ url_for('form') }}"
-        >Start assessment</a
-      >
+      <a class="btn btn-primary" href="{{ url_for('form') }}">Start assessment</a>
       <a class="btn btn-ghost" href="#how-it-works">How it works</a>
     </div>
   </div>
@@ -32,25 +31,51 @@ Assistant{% endblock %} {% block content %}
         <span>Guidance</span>
         <strong>Personalised advice</strong>
       </div>
+      <div class="hero-stat">
+        <span>Export</span>
+        <strong>PDF report</strong>
+      </div>
     </div>
-    <p class="section-description" style="margin-top: 24px">
-      Your answers remain private and are only used to create your personal risk
-      summary. You can download a PDF copy or revisit your past results at any
-      time.
+    <p class="section-description" style="margin-top:20px; margin-bottom:0">
+      Your answers are only used to create your personal risk summary.
+      You can download a PDF copy or revisit past results at any time.
     </p>
   </div>
 </section>
 
+<!-- Stats strip -->
+<section class="stats-strip" aria-label="Key statistics">
+  <div class="stat-item">
+    <strong>23</strong>
+    <span>clinical &amp; lifestyle factors analysed</span>
+  </div>
+  <div class="stat-item">
+    <strong>3</strong>
+    <span>risk classes with probability scores</span>
+  </div>
+  <div class="stat-item">
+    <strong>&lt; 2 min</strong>
+    <span>to complete the assessment</span>
+  </div>
+  <div class="stat-item">
+    <strong>Free</strong>
+    <span>no account required</span>
+  </div>
+</section>
+
 <section id="how-it-works">
-  <h2 class="section-title">How LungProfilaxe supports you</h2>
+  <h2 class="section-title">How Lung Cancer Detection supports you</h2>
   <p class="section-description">
-    Built with medical datasets and refined machine learning models,
-    LungProfilaxe balances accuracy with empathy. Every interaction keeps you
+    Built with a medically-sourced dataset and a deep neural network,
+    Lung Cancer Detection balances accuracy with empathy. Every interaction keeps you
     informed while reinforcing that this is not a substitute for professional
     care.
   </p>
   <div class="feature-grid">
     <article class="feature-card">
+      <div class="feature-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
       <h3>Human-friendly language</h3>
       <p>
         Technical insights are rewritten in clear, supportive wording so every
@@ -58,13 +83,19 @@ Assistant{% endblock %} {% block content %}
       </p>
     </article>
     <article class="feature-card">
+      <div class="feature-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
       <h3>Probability first</h3>
       <p>
         Instead of a single label, you see the likelihood of each risk level,
-        allowing for richer conversations with healthcare professionals.
+        enabling richer conversations with healthcare professionals.
       </p>
     </article>
     <article class="feature-card">
+      <div class="feature-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
       <h3>Personal history</h3>
       <p>
         Opt in to save assessments and trace how your lifestyle changes shape
@@ -72,6 +103,9 @@ Assistant{% endblock %} {% block content %}
       </p>
     </article>
     <article class="feature-card">
+      <div class="feature-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
       <h3>Downloadable report</h3>
       <p>
         Export your summary as a polished PDF to share with clinicians, family
@@ -79,5 +113,11 @@ Assistant{% endblock %} {% block content %}
       </p>
     </article>
   </div>
+</section>
+
+<section class="cta-banner">
+  <h2>Ready to take control of your lung health?</h2>
+  <p>The assessment takes less than two minutes and is completely free.</p>
+  <a class="btn btn-primary" href="{{ url_for('form') }}">Begin assessment →</a>
 </section>
 {% endblock %}

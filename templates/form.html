@@ -1,36 +1,43 @@
-{% extends "base.html" %} {% block title %}Assessment — LungProfilaxe{% endblock
-%} {% block content %}
+{% extends "base.html" %}
+{% block title %}Assessment — Lung Cancer Detection{% endblock %}
+{% block content %}
 <section class="card form-card">
   <div>
     <h1>Your personalised lung health snapshot</h1>
     <p>
-      Provide details about your lifestyle and current symptoms. The score for
-      each factor ranges from <strong>1 (very low)</strong> to
-      <strong>9 (very high)</strong>. The more accurate your answers, the more
-      tailored the guidance will be.
+      Provide details about your lifestyle and current symptoms. Use the sliders
+      to score each factor from <strong>1 (very low / none)</strong> to
+      <strong>9 (very high / severe)</strong>. The more accurate your answers,
+      the more tailored the guidance will be.
     </p>
   </div>
-  <form method="POST" action="{{ url_for('results') }}" novalidate>
-    <div class="form-section">
+
+  <!-- Multi-step progress indicator -->
+  <div class="form-progress" role="navigation" aria-label="Form sections">
+    <div class="form-progress-step is-active" data-section="0">
+      <span class="step-number">1</span><span class="step-label">Identity</span>
+    </div>
+    <div class="form-progress-divider"></div>
+    <div class="form-progress-step" data-section="1">
+      <span class="step-number">2</span><span class="step-label">Lifestyle</span>
+    </div>
+    <div class="form-progress-divider"></div>
+    <div class="form-progress-step" data-section="2">
+      <span class="step-number">3</span><span class="step-label">Symptoms</span>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('results') }}" novalidate id="assessmentForm">
+
+    <!-- ── Section 0: Identity ───────────────────────────────────────── -->
+    <div class="form-section" data-section="0">
       <h2>Identity</h2>
       <div class="form-grid">
-        <div
-          class="input-group"
-          role="radiogroup"
-          aria-labelledby="share-label"
-        >
-          <span class="input-label" id="share-label"
-            >Would you like to record your name?</span
-          >
+        <div class="input-group" role="radiogroup" aria-labelledby="share-label">
+          <span class="input-label" id="share-label">Would you like to record your name?</span>
           <div class="radio-group">
             <label class="radio-pill">
-              <input
-                type="radio"
-                id="share_yes"
-                name="share_name"
-                value="yes"
-                checked
-              />
+              <input type="radio" id="share_yes" name="share_name" value="yes" checked />
               Yes
             </label>
             <label class="radio-pill">
@@ -38,34 +45,17 @@
               No
             </label>
           </div>
-          <p class="input-description">
-            Saved names appear in your history to make follow-up easier. Choose
-            “No” to stay anonymous.
-          </p>
+          <p class="input-description">Saved names appear in your history. Choose "No" to stay anonymous.</p>
         </div>
         <div class="input-group" id="name_field">
           <label class="input-label" for="patient_name">Your name</label>
-          <input
-            class="input-control"
-            type="text"
-            name="patient_name"
-            id="patient_name"
-            maxlength="100"
-            placeholder="Optional"
-          />
+          <input class="input-control" type="text" name="patient_name" id="patient_name"
+                 maxlength="100" placeholder="Optional" autocomplete="name" />
         </div>
         <div class="input-group">
           <label class="input-label" for="age">Age</label>
-          <input
-            class="input-control"
-            type="number"
-            name="age"
-            id="age"
-            min="0"
-            max="120"
-            required
-            value="30"
-          />
+          <input class="input-control" type="number" name="age" id="age"
+                 min="1" max="120" required value="30" />
         </div>
         <div class="input-group">
           <label class="input-label" for="gender">Gender</label>
@@ -76,97 +66,142 @@
           </select>
         </div>
       </div>
+      <div class="section-nav">
+        <button type="button" class="btn btn-primary next-section">Next: Lifestyle →</button>
+      </div>
     </div>
 
-    <div class="form-section">
+    <!-- ── Section 1: Lifestyle ──────────────────────────────────────── -->
+    <div class="form-section hidden" data-section="1">
       <h2>Lifestyle &amp; Environment</h2>
       <p class="input-description">
-        Score each factor by how strongly it applies to you, where 1 is minimal
-        and 9 is severe or very frequent.
+        Score each factor by how strongly it applies to you — 1 is minimal and 9 is severe or very frequent.
       </p>
       <div class="form-grid">
-        {% set lifestyle_fields = [ ('air_pollution', 'Air pollution exposure'),
-        ('alcohol_use', 'Alcohol use'), ('dust_allergy', 'Dust allergy'),
-        ('occupational_hazards', 'Occupational hazards'), ('genetic_risk',
-        'Family history / genetic risk'), ('chronic_lung_disease', 'Chronic lung
-        disease'), ('balanced_diet', 'Balanced diet'), ('obesity', 'Obesity'),
-        ('smoking', 'Smoking'), ('passive_smoker', 'Passive smoker exposure') ]
-        %} {% for field, label in lifestyle_fields %}
+        {% set lifestyle_fields = [
+          ('air_pollution',       'Air pollution exposure',        'How heavily polluted is the air in your area?'),
+          ('alcohol_use',         'Alcohol use',                   'How frequently and heavily do you consume alcohol?'),
+          ('dust_allergy',        'Dust allergy',                  'How severely does dust affect you?'),
+          ('occupational_hazards','Occupational hazards',          'Are you regularly exposed to chemicals, asbestos, or other workplace hazards?'),
+          ('genetic_risk',        'Family / genetic risk',         'Does lung cancer run in your family?'),
+          ('chronic_lung_disease','Chronic lung disease',          'Do you have a diagnosis like COPD, asthma, or bronchitis?'),
+          ('balanced_diet',       'Balanced diet',                 'How balanced and nutritious is your daily diet?'),
+          ('obesity',             'Obesity',                       'How would you rate your body weight relative to a healthy range?'),
+          ('smoking',             'Smoking',                       'How heavily do you smoke (number and frequency)?'),
+          ('passive_smoker',      'Passive smoke exposure',        'How often are you exposed to others\' cigarette smoke?')
+        ] %}
+        {% for field, label, tooltip in lifestyle_fields %}
         <div class="input-group">
-          <label class="input-label" for="{{ field }}">{{ label }}</label>
-          <input
-            class="input-control"
-            type="number"
-            name="{{ field }}"
-            id="{{ field }}"
-            min="1"
-            max="9"
-            required
-            value="1"
-          />
+          <label class="input-label" for="{{ field }}">
+            {{ label }}
+            <span class="tooltip" data-tip="{{ tooltip }}" aria-label="{{ tooltip }}">?</span>
+          </label>
+          <div class="slider-wrap">
+            <input class="range-slider" type="range" name="{{ field }}" id="{{ field }}"
+                   min="1" max="9" step="1" required value="1"
+                   oninput="document.getElementById('val_{{ field }}').textContent = this.value" />
+            <span class="slider-value" id="val_{{ field }}">1</span>
+          </div>
+          <div class="slider-labels"><span>1 — None</span><span>9 — Severe</span></div>
         </div>
         {% endfor %}
       </div>
+      <div class="section-nav">
+        <button type="button" class="btn btn-ghost prev-section">← Back</button>
+        <button type="button" class="btn btn-primary next-section">Next: Symptoms →</button>
+      </div>
     </div>
 
-    <div class="form-section">
+    <!-- ── Section 2: Symptoms ───────────────────────────────────────── -->
+    <div class="form-section hidden" data-section="2">
       <h2>Symptoms &amp; Observations</h2>
+      <p class="input-description">Rate the severity or frequency of each symptom you experience.</p>
       <div class="form-grid">
-        {% set symptom_fields = [ ('chest_pain', 'Chest pain'),
-        ('coughing_blood', 'Coughing blood'), ('fatigue', 'Fatigue'),
-        ('weight_loss', 'Unintentional weight loss'), ('shortness_of_breath',
-        'Shortness of breath'), ('wheezing', 'Wheezing'),
-        ('swallowing_difficulty', 'Difficulty swallowing'), ('clubbing',
-        'Clubbing of fingernails'), ('frequent_cold', 'Frequent colds'),
-        ('dry_cough', 'Persistent dry cough'), ('snoring', 'Snoring intensity')
-        ] %} {% for field, label in symptom_fields %}
+        {% set symptom_fields = [
+          ('chest_pain',            'Chest pain',                 'How often and how severely do you experience chest pain?'),
+          ('coughing_blood',        'Coughing blood',             'Have you noticed blood when coughing?'),
+          ('fatigue',               'Fatigue',                    'How persistent and debilitating is your tiredness?'),
+          ('weight_loss',           'Unintentional weight loss',  'Have you lost weight without trying?'),
+          ('shortness_of_breath',   'Shortness of breath',        'How often do you feel breathless during normal activities?'),
+          ('wheezing',              'Wheezing',                   'Do you experience a whistling sound when breathing?'),
+          ('swallowing_difficulty', 'Difficulty swallowing',      'Do you have trouble swallowing food or liquids?'),
+          ('clubbing',              'Clubbing of fingernails',     'Have your fingernails changed shape — becoming rounder or wider?'),
+          ('frequent_cold',         'Frequent colds',             'How often do you get colds or respiratory infections?'),
+          ('dry_cough',             'Persistent dry cough',       'How persistent is your dry cough?'),
+          ('snoring',               'Snoring intensity',          'How severe is your snoring?')
+        ] %}
+        {% for field, label, tooltip in symptom_fields %}
         <div class="input-group">
-          <label class="input-label" for="{{ field }}">{{ label }}</label>
-          <input
-            class="input-control"
-            type="number"
-            name="{{ field }}"
-            id="{{ field }}"
-            min="1"
-            max="9"
-            required
-            value="1"
-          />
+          <label class="input-label" for="{{ field }}">
+            {{ label }}
+            <span class="tooltip" data-tip="{{ tooltip }}" aria-label="{{ tooltip }}">?</span>
+          </label>
+          <div class="slider-wrap">
+            <input class="range-slider" type="range" name="{{ field }}" id="{{ field }}"
+                   min="1" max="9" step="1" required value="1"
+                   oninput="document.getElementById('val_{{ field }}').textContent = this.value" />
+            <span class="slider-value" id="val_{{ field }}">1</span>
+          </div>
+          <div class="slider-labels"><span>1 — None</span><span>9 — Severe</span></div>
         </div>
         {% endfor %}
       </div>
-    </div>
-
-    <div class="submit-row">
-      <input type="submit" value="Generate my insights" />
+      <div class="section-nav">
+        <button type="button" class="btn btn-ghost prev-section">← Back</button>
+        <div class="submit-row">
+          <button type="submit" id="submitBtn">
+            <span class="btn-text">Generate my insights</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
     </div>
   </form>
 </section>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const toggleNameField = () => {
-      const shareName = document.querySelector(
-        'input[name="share_name"]:checked'
-      );
-      const nameField = document.getElementById("name_field");
-      if (!shareName || !nameField) {
-        return;
-      }
-      nameField.style.display = shareName.value === "yes" ? "block" : "none";
-      if (shareName.value === "no") {
-        const input = nameField.querySelector("input");
-        if (input) {
-          input.value = "";
-        }
-      }
-    };
+  // ── Name field toggle ────────────────────────────────────────────────────
+  const toggleName = () => {
+    const val = document.querySelector('input[name="share_name"]:checked')?.value;
+    const field = document.getElementById('name_field');
+    if (!field) return;
+    field.style.display = val === 'yes' ? '' : 'none';
+    if (val !== 'yes') field.querySelector('input').value = '';
+  };
+  document.querySelectorAll('input[name="share_name"]').forEach(el => el.addEventListener('change', toggleName));
+  toggleName();
 
-    document.querySelectorAll('input[name="share_name"]').forEach((el) => {
-      el.addEventListener("change", toggleNameField);
+  // ── Multi-step form ──────────────────────────────────────────────────────
+  const sections = Array.from(document.querySelectorAll('.form-section'));
+  const steps    = Array.from(document.querySelectorAll('.form-progress-step'));
+  let current = 0;
+
+  const showSection = (idx) => {
+    sections.forEach((s, i) => s.classList.toggle('hidden', i !== idx));
+    steps.forEach((s, i) => {
+      s.classList.toggle('is-active', i === idx);
+      s.classList.toggle('is-done',   i < idx);
     });
+    current = idx;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-    toggleNameField();
+  document.querySelectorAll('.next-section').forEach(btn => {
+    btn.addEventListener('click', () => { if (current < sections.length - 1) showSection(current + 1); });
+  });
+  document.querySelectorAll('.prev-section').forEach(btn => {
+    btn.addEventListener('click', () => { if (current > 0) showSection(current - 1); });
+  });
+
+  // ── Submit spinner ────────────────────────────────────────────────────────
+  document.getElementById('assessmentForm').addEventListener('submit', () => {
+    const btn = document.getElementById('submitBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('is-loading');
+    }
   });
 </script>
 {% endblock %}

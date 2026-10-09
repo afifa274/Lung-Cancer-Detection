@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}About — Lung Cancer Detection{% endblock %}
+{% block content %}
+<section class="card form-card">
+  <h1>About Lung Cancer Detection</h1>
+  <p class="results-subtitle">
+    A free, open-source lung cancer risk estimation tool powered by deep learning.
+  </p>
+
+  <div class="about-grid">
+    <article class="about-block">
+      <h2>The model</h2>
+      <p>
+        Lung Cancer Detection uses a multi-layer neural network trained on a publicly available
+        lung cancer patient dataset. The network takes <strong>23 clinical and lifestyle
+        factors</strong> as input and outputs the probability of belonging to one of
+        three risk classes: <em>Low</em>, <em>Medium</em>, or <em>High</em>.
+      </p>
+      <ul>
+        <li><strong>Architecture:</strong> Dense(128) → BN → Dropout(0.3) → Dense(64) → BN → Dropout(0.2) → Dense(32) → Softmax(3)</li>
+        <li><strong>Loss function:</strong> Categorical cross-entropy</li>
+        <li><strong>Optimiser:</strong> Adam (lr = 0.001) with ReduceLROnPlateau</li>
+        <li><strong>Training:</strong> Up to 150 epochs with early stopping (patience = 15)</li>
+        <li><strong>Preprocessing:</strong> StandardScaler (zero mean, unit variance)</li>
+        <li><strong>Split:</strong> 80 % train / 20 % test, stratified by class</li>
+      </ul>
+    </article>
+
+    <article class="about-block">
+      <h2>The factors assessed</h2>
+      <p>Each of the 23 inputs is scored on a 1–9 scale by the user:</p>
+      <div class="two-col-list">
+        <ul>
+          <li>Age</li>
+          <li>Gender</li>
+          <li>Air pollution exposure</li>
+          <li>Alcohol use</li>
+          <li>Dust allergy</li>
+          <li>Occupational hazards</li>
+          <li>Genetic / family risk</li>
+          <li>Chronic lung disease</li>
+          <li>Balanced diet</li>
+          <li>Obesity</li>
+          <li>Smoking</li>
+          <li>Passive smoke exposure</li>
+        </ul>
+        <ul>
+          <li>Chest pain</li>
+          <li>Coughing blood</li>
+          <li>Fatigue</li>
+          <li>Unintentional weight loss</li>
+          <li>Shortness of breath</li>
+          <li>Wheezing</li>
+          <li>Swallowing difficulty</li>
+          <li>Clubbing of fingernails</li>
+          <li>Frequent colds</li>
+          <li>Persistent dry cough</li>
+          <li>Snoring intensity</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="about-block">
+      <h2>REST API</h2>
+      <p>
+        Lung Cancer Detection exposes a <code>/api/predict</code> endpoint for programmatic access.
+        Send a <code>POST</code> request with a JSON body containing all 23 fields:
+      </p>
+      <pre class="code-block"><code>POST /api/predict
+Content-Type: application/json
+
+{
+  "age": 45,
+  "gender": "male",
+  "air_pollution": 3,
+  "smoking": 7,
+  ...
+}
+
+→ 200 OK
+{
+  "outcome": "High",
+  "percent_low": 5.2,
+  "percent_medium": 18.1,
+  "percent_high": 76.7,
+  "advice": ["Heavy smoking is one of the strongest risk factors..."]
+}</code></pre>
+    </article>
+
+    <article class="about-block">
+      <h2>Disclaimer</h2>
+      <p>
+        Lung Cancer Detection is an <strong>educational tool only</strong>. It does not constitute
+        medical advice, diagnosis, or treatment. Results should not be used as a substitute
+        for professional medical evaluation. Always consult a qualified healthcare provider
+        for any health concerns.
+      </p>
+      <p>
+        The dataset originates from publicly available lung cancer research data. The model
+        has not been validated in a clinical setting.
+      </p>
+    </article>
+  </div>
+
+  <div class="results-actions" style="margin-top:0">
+    <a class="btn btn-primary" href="{{ url_for('form') }}">Start assessment</a>
+    <a class="btn btn-ghost" href="{{ url_for('home') }}">Return home</a>
+  </div>
+</section>
+{% endblock %}

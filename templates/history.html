@@ -1,93 +1,157 @@
-{% extends "base.html" %} {% block title %}History — {{ patient_id }}{% endblock
-%} {% block head_extra %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}History — {{ patient_id }}{% endblock %}
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
 <section class="history-card">
-  <h1>Assessment history for {{ patient_id }}</h1>
-  {% if results %}
+  <div class="history-header">
+    <h1>Assessment history</h1>
+    <p class="results-subtitle">Patient: <strong>{{ patient_id }}</strong></p>
+  </div>
 
+  {% if results %}
   <div class="history-table-wrapper" role="region" aria-live="polite">
     <div class="history-table-scroll">
       <table class="history-table">
         <thead>
           <tr>
-            {% for key in results[0].keys() %}
-            <th>{{ key }}</th>
-            {% endfor %}
+            <th>#</th>
+            <th>Risk Level</th>
+            <th>Age</th>
+            <th>Smoking</th>
+            <th>Air Pollution</th>
+            <th>Genetic Risk</th>
+            <th>Chest Pain</th>
+            <th>Coughing Blood</th>
+            <th>Fatigue</th>
+            <th>Weight Loss</th>
+            <th>Shortness of Breath</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for row in results %}
           <tr>
-            {% for value in row.values() %}
-            <td>{{ value }}</td>
-            {% endfor %}
+            <td>{{ loop.index }}</td>
+            <td>
+              <span class="badge badge--{{ row.get('Level','').lower() }}">
+                {{ row.get('Level', '—') }}
+              </span>
+            </td>
+            <td>{{ row.get('Age', '—') }}</td>
+            <td>{{ row.get('Smoking', '—') }}</td>
+            <td>{{ row.get('Air Pollution', '—') }}</td>
+            <td>{{ row.get('Genetic Risk', '—') }}</td>
+            <td>{{ row.get('Chest Pain', '—') }}</td>
+            <td>{{ row.get('Coughing Blood', '—') }}</td>
+            <td>{{ row.get('Fatigue', '—') }}</td>
+            <td>{{ row.get('Weight Loss', '—') }}</td>
+            <td>{{ row.get('Shortness of Breath', '—') }}</td>
+            <td>
+              <form method="POST"
+                    action="{{ url_for('delete_record', patient_id=patient_id, record_index=row.get('Index', 0)|int) }}"
+                    onsubmit="return confirm('Delete this record?');"
+                    style="display:inline">
+                <button type="submit" class="btn-delete" aria-label="Delete record {{ loop.index }}">✕</button>
+              </form>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+
+  <!-- Risk trend chart -->
   <div class="chart-card" role="img" aria-labelledby="riskChartLabel">
-    <span id="riskChartLabel" class="visually-hidden"
-      >Trend of assessed lung cancer risk levels</span
-    >
+    <h3 id="riskChartLabel" style="margin:0 0 12px; font-size:1rem; color:var(--text-secondary)">
+      Risk level trend across assessments
+    </h3>
     <canvas id="riskChart"></canvas>
   </div>
+
   {% else %}
-  <p class="empty-state">
-    No saved assessments were found for this identifier.
-  </p>
+  <p class="empty-state">No saved assessments were found for this identifier.</p>
   {% endif %}
+
   <div class="history-actions">
     <a class="btn btn-secondary" href="{{ url_for('form') }}">New assessment</a>
-    <a class="btn btn-outline" href="{{ url_for('home') }}">Return home</a>
+    {% if results %}
+    <a class="btn btn-outline" href="{{ url_for('download_pdf', patient_id=patient_id) }}">Download PDF</a>
+    {% endif %}
+    <a class="btn btn-ghost" href="{{ url_for('home') }}">Return home</a>
   </div>
 </section>
-{% endblock %} {% block scripts %} {% if results %}
+{% endblock %}
+
+{% block scripts %}
+{% if results %}
 <script>
-  const labels = [
-    {% for row in results %}
-      "{{ loop.index }}",
-    {% endfor %}
-  ];
-  const data = [
-    {% for row in results %}
-      {{ 100 if row['Level'] == 'High' else (50 if row['Level'] == 'Medium' else 0) }},
-    {% endfor %}
-  ];
+  const labels = [{% for row in results %}"Assessment {{ loop.index }}",{% endfor %}];
+  const lowData    = [{% for row in results %}{{ 'null' if row.get('Level','') != 'Low'    else 1 }},{% endfor %}];
+  const medData    = [{% for row in results %}{{ 'null' if row.get('Level','') != 'Medium' else 1 }},{% endfor %}];
+  const highData   = [{% for row in results %}{{ 'null' if row.get('Level','') != 'High'   else 1 }},{% endfor %}];
+  // Numeric line: Low=0, Medium=50, High=100
+  const lineData   = [{% for row in results %}{{ 100 if row.get('Level','') == 'High' else (50 if row.get('Level','') == 'Medium' else 0) }},{% endfor %}];
+
   const ctx = document.getElementById('riskChart');
   if (ctx) {
     new Chart(ctx, {
       type: 'line',
       data: {
         labels,
-        datasets: [
-          {
-            label: 'Risk level (0 = Low, 50 = Medium, 100 = High)',
-            data,
-            borderColor: 'rgb(37, 99, 235)',
-            backgroundColor: 'rgba(37, 99, 235, 0.18)',
-            tension: 0.32,
-            fill: true,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }
-        ]
+        datasets: [{
+          label: 'Risk level',
+          data: lineData,
+          borderColor: 'rgb(37,99,235)',
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const {ctx: c, chartArea} = chart;
+            if (!chartArea) return 'rgba(37,99,235,0.08)';
+            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0,   'rgba(239,68,68,0.25)');
+            gradient.addColorStop(0.5, 'rgba(245,158,11,0.18)');
+            gradient.addColorStop(1,   'rgba(16,185,129,0.12)');
+            return gradient;
+          },
+          tension: 0.36,
+          fill: true,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointBackgroundColor: lineData.map(v =>
+            v === 100 ? '#ef4444' : v === 50 ? '#f59e0b' : '#10b981'
+          ),
+        }]
       },
       options: {
         responsive: true,
-        scales: {
-          y: {
-            suggestedMin: 0,
-            suggestedMax: 100,
-            ticks: {
-              stepSize: 25
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const map = {0:'Low', 50:'Medium', 100:'High'};
+                return ' Risk: ' + (map[ctx.parsed.y] || ctx.parsed.y);
+              }
             }
           }
+        },
+        scales: {
+          y: {
+            suggestedMin: -10,
+            suggestedMax: 110,
+            ticks: {
+              stepSize: 50,
+              callback: v => ({0:'Low', 50:'Medium', 100:'High'}[v] ?? '')
+            },
+            grid: { color: 'rgba(148,163,184,0.15)' }
+          },
+          x: { grid: { color: 'rgba(148,163,184,0.12)' } }
         }
       }
     });
   }
 </script>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}

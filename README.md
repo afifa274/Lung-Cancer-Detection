@@ -1,79 +1,173 @@
-# LungProfilaxe — Lung Cancer Risk Assessment Assistant
+# Lung Cancer Detection — Lung Cancer Risk Assessment Assistant
 
-Welcome to **LungProfilaxe** — an interactive web service that helps patients and clinicians estimate the probability of developing lung cancer based on a standardized questionnaire. The project combines a trained neural network, a clean user interface, and auto-generated recommendations to make screening understandable and accessible.
+A free, open-source web service that estimates lung cancer risk using a deep neural network trained on a publicly available clinical dataset. Patients and clinicians answer a 23-factor questionnaire and receive instant, human-readable risk projections across three classes: **Low**, **Medium**, and **High**.
 
-## 📌 Key Features
+---
 
-- **Accurate Prediction**: A Keras model analyzes 23 clinical and behavioral factors, normalizes them, and outputs risk probabilities across three classes (Low / Medium / High).
-- **Modern Interface**: Pages _Home_, _Assessment_, _Results_, and _History_ are styled consistently with cards, tooltips, and smooth risk indicators.
-- **History Tracking**: Saved questionnaires are grouped per patient, displayed in scrollable cards, and visualized with interactive Chart.js graphs to show risk dynamics.
-- **PDF Export**: Generate patient reports in one click. The app auto-detects `wkhtmltopdf` and creates a `report.pdf`.
-- **Personalized Advice**: Based on the most concerning factors, the app generates tailored recommendations for next steps.
+## ✨ What's new (upgraded version)
 
-## 🧠 Model Details
+| Area | Improvement |
+|---|---|
+| **Model** | `softmax` output (correct for multi-class) · `categorical_crossentropy` loss · 128→64→32 architecture with `BatchNormalization` + `Dropout` · `EarlyStopping` & `ReduceLROnPlateau` · stratified split · reproducible seed · full classification report |
+| **Backend** | Full input validation with flash messages · structured CSV with named headers · `/api/predict` JSON REST endpoint · `/about` + error pages (404/500) · dual PDF engine (pdfkit → WeasyPrint fallback) · record deletion endpoint · `SECRET_KEY` via env var |
+| **UI — Form** | 3-step wizard with progress indicator · range sliders (1–9) with live value display · tooltips on every field · submit spinner |
+| **UI — Results** | Animated progress bars · risk interpretation paragraph · assessment timestamp · "Copy link" button |
+| **UI — History** | Named table columns · coloured risk badges · per-row delete · improved Chart.js v4 chart with gradient fill + colour-coded points + readable Y-axis labels · PDF download button |
+| **UI — General** | Dark / Light theme toggle (persisted in localStorage) · page-loading overlay · flash message system with auto-dismiss · `About` page with model details & API docs · 404 / 500 error pages · SVG icon in nav brand |
+| **CSS** | CSS custom-property dual-theme system · range slider styles · tooltip styles · stepper styles · flash message styles · CTA banner · stats strip · feature card hover animations · mobile improvements |
 
-1. **Data**: Uses the `cancer patient data sets.csv` dataset, where each record contains a patient ID, demographics, and answers on a 1–9 scale.
-2. **Preprocessing**: Features are standardized with `StandardScaler`. The fitted scaler is stored as `scaler.pkl` and reused in the web app.
-3. **Architecture**: A sequential neural net (Dense → Dense → Dense) trained for 10 epochs with Adam optimizer and `binary_crossentropy` in a one-hot setup.
-4. **Inference**: In `gui.py` the model (`cancer_snus_model.h5`) loads, accepts normalized answers, and returns class probabilities.
+---
 
-To retrain, run `model.py` after updating the dataset. It will overwrite both the model weights and scaler.
+## 📌 Key features
 
-## 🖥️ Interface Pages
+- **Accurate prediction** — Neural network analyses 23 clinical and lifestyle factors and outputs class probabilities.
+- **Modern interface** — Home, Assessment (3-step wizard), Results, History, About pages, all theme-aware.
+- **History tracking** — Assessments saved per patient with trend chart and per-row delete.
+- **PDF export** — Auto-detects `wkhtmltopdf`; falls back to WeasyPrint; falls back to HTML download.
+- **REST API** — POST to `/api/predict` for programmatic access (see `/about` for schema).
+- **Personalised advice** — Risk-factor-driven recommendations with graduated severity.
 
-- **Home** — Introduces the service, explains the scoring system, and guides the user to the assessment.
-- **Assessment** — A multi-page form grouped by lifestyle, symptoms, and background factors, with tooltips and a 1–9 scale.
-- **Results** — Displays the risk badge, animated progress bars, and tailored recommendations.
-- **History** — Scrollable table of past assessments and an adaptive Chart.js risk trend graph.
+---
 
-## ⚙️ Installation & Run
+## 🧠 Model details
+
+| Property | Value |
+|---|---|
+| Architecture | Dense(128) → BN → Dropout(0.3) → Dense(64) → BN → Dropout(0.2) → Dense(32) → Softmax(3) |
+| Loss | `categorical_crossentropy` |
+| Optimiser | Adam (lr=0.001) + ReduceLROnPlateau |
+| Training | max 150 epochs, EarlyStopping patience=15 |
+| Data split | 80/20 stratified |
+| Preprocessing | `StandardScaler` (fitted on train, applied to test & inference) |
+
+Retrain at any time by running `python model.py`. The script saves training plots to `static/images/training_history.png`.
+
+---
+
+## ⚙️ Installation & run
 
 ```bash
-# 1. (Optional) Create a virtual environment
+# 1. Create and activate a virtual environment (recommended)
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
 
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. (Optional) Install wkhtmltopdf for PDF export
-#   macOS: brew install --cask wkhtmltopdf
-#   Ubuntu/Debian: sudo apt install wkhtmltopdf
-#   Windows: download installer from https://wkhtmltopdf.org/downloads.html
+# 3. (Optional) Install wkhtmltopdf for PDF export via pdfkit
+#    macOS:  brew install --cask wkhtmltopdf
+#    Ubuntu: sudo apt install wkhtmltopdf
+#    Windows: https://wkhtmltopdf.org/downloads.html
+#    (WeasyPrint is installed via pip and requires no extra binary)
 
-# 4. Run the web app
+# 4. (Optional) Set a production secret key
+export SECRET_KEY="your-random-secret-here"   # Linux/macOS
+set SECRET_KEY=your-random-secret-here        # Windows CMD
+
+# 5. Run the web app
 python gui.py
-The app will be available at http://127.0.0.1:5000/. Results are saved in user_inputs.csv so history can be reviewed or exported later.
-
- Project Structure
- .
-├── gui.py                     # Flask app and routes
-├── model.py                   # Training script for the neural net
-├── cancer_snus_model.h5       # Trained model weights
-├── scaler.pkl                 # Feature scaler
-├── user_inputs.csv            # Collected user answers
-├── static/
-│   ├── css/main.css           # Global styles
-│   └── images/favicon.svg     # App icon
-└── templates/
-    ├── base.html              # Base template and navigation
-    ├── home.html              # Home page
-    ├── form.html              # Assessment form
-    ├── results.html           # Results screen
-    └── history.html           # History table and chart
-⚠️ cancer_snus_model.h5 and scaler.pkl must be placed in the same folder as gui.py. If you clone the repo fresh, make sure artifacts are copied correctly.
-
-🧪 Useful Commands
-
-python -m compileall . — quickly check syntax for all Python files.
-
-python model.py — retrain the model after dataset update.
-
-python gui.py — launch the web interface.
-
-🙌 Acknowledgements
-
-The dataset was provided by the authors of the Lung Cancer Patient Data Sets. Thanks for making this data public, enabling the creation of this interactive tool.
-
-If you spot issues or want to suggest improvements, feel free to open an issue or submit a pull request — contributions are welcome!
 ```
+
+The app will be available at **http://127.0.0.1:5000/**.
+
+To enable debug mode: `FLASK_DEBUG=1 python gui.py`
+
+---
+
+## 🗂️ Project structure
+
+```
+.
+├── gui.py                      # Flask app, routes, validation, PDF export
+├── model.py                    # Training script — run to retrain
+├── cancer_snus_model.h5        # Trained model weights
+├── scaler.pkl                  # Feature scaler
+├── user_inputs.csv             # Persistent patient records
+├── requirements.txt
+├── static/
+│   ├── css/main.css            # Full design system (dark + light theme)
+│   └── images/
+│       ├── favicon.svg
+│       └── training_history.png  # Generated by model.py
+└── templates/
+    ├── base.html               # Shell, nav, flash messages, theme toggle
+    ├── home.html               # Landing page
+    ├── form.html               # 3-step assessment wizard
+    ├── results.html            # Results with animated bars
+    ├── history.html            # History table + Chart.js trend
+    ├── about.html              # Model info & API reference
+    ├── 404.html                # Not-found error page
+    └── 500.html                # Server error page
+```
+
+---
+
+## 🔌 REST API
+
+```
+POST /api/predict
+Content-Type: application/json
+
+{
+  "age": 45,
+  "gender": "male",
+  "air_pollution": 3,
+  "alcohol_use": 2,
+  "dust_allergy": 1,
+  "occupational_hazards": 2,
+  "genetic_risk": 5,
+  "chronic_lung_disease": 1,
+  "balanced_diet": 4,
+  "obesity": 3,
+  "smoking": 7,
+  "passive_smoker": 2,
+  "chest_pain": 3,
+  "coughing_blood": 1,
+  "fatigue": 4,
+  "weight_loss": 2,
+  "shortness_of_breath": 3,
+  "wheezing": 2,
+  "swallowing_difficulty": 1,
+  "clubbing": 1,
+  "frequent_cold": 3,
+  "dry_cough": 2,
+  "snoring": 1
+}
+```
+
+Response:
+```json
+{
+  "outcome": "Medium",
+  "percent_low": 22.4,
+  "percent_medium": 61.8,
+  "percent_high": 15.8,
+  "advice": ["Reducing smoking frequency can meaningfully lower your long-term lung cancer risk."]
+}
+```
+
+---
+
+## 🧪 Useful commands
+
+```bash
+python model.py            # retrain the model
+python gui.py              # launch the web app (production-safe debug=off)
+FLASK_DEBUG=1 python gui.py  # development mode with auto-reload
+python -m compileall .     # syntax check all Python files
+```
+
+---
+
+## ⚠️ Disclaimer
+
+Lung Cancer Detection is an **educational tool only**. It does not constitute medical advice, diagnosis, or treatment. Always consult a qualified healthcare professional for any health concerns.
+
+---
+
+## 🙌 Acknowledgements
+
+Dataset: publicly available Lung Cancer Patient Data Sets. Thanks to the authors for making this data available and enabling the creation of interactive tools like this one.

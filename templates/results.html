@@ -1,101 +1,101 @@
-{% extends "base.html" %} {% block title %}Results — LungProfilaxe{% endblock %}
+{% extends "base.html" %}
+{% block title %}Results — Lung Cancer Detection{% endblock %}
 {% block content %}
 <section class="results-layout">
   <article class="results-card">
-    <h1>Risk assessment complete</h1>
-    <p class="results-subtitle">
-      Based on your responses, here is the current projection of your lung
-      cancer risk profile.
+    <div class="results-header">
+      <div>
+        <h1>Risk assessment complete</h1>
+        <p class="results-subtitle">
+          Based on your responses, here is the current projection of your lung
+          cancer risk profile.
+          {% if timestamp %}<span class="results-timestamp">{{ timestamp }}</span>{% endif %}
+        </p>
+      </div>
+    </div>
+
+    {% set risk_class = 'risk-badge--low' %}
+    {% if outcome == 'Medium' %}{% set risk_class = 'risk-badge--medium' %}
+    {% elif outcome == 'High' %}{% set risk_class = 'risk-badge--high' %}{% endif %}
+
+    <div class="risk-badge {{ risk_class }}" aria-label="Risk level: {{ outcome }}">
+      <span class="risk-dot"></span>
+      Current level: <strong>{{ outcome }}</strong>
+    </div>
+
+    <!-- Interpretation blurb -->
+    {% if outcome == 'Low' %}
+    <p class="risk-interpretation">
+      Your responses suggest a <strong>low</strong> probability of elevated lung cancer risk.
+      Continue maintaining a healthy lifestyle and attend routine check-ups.
     </p>
-    {% set risk_class = 'risk-badge--low' %} {% if outcome == 'Medium' %} {% set
-    risk_class = 'risk-badge--medium' %} {% elif outcome == 'High' %} {% set
-    risk_class = 'risk-badge--high' %} {% endif %}
-    <div class="risk-badge {{ risk_class }}">Current level: {{ outcome }}</div>
+    {% elif outcome == 'Medium' %}
+    <p class="risk-interpretation warning-text">
+      Your responses suggest a <strong>moderate</strong> risk level. Review the personalised
+      recommendations below and consider discussing them with your healthcare provider.
+    </p>
+    {% else %}
+    <p class="risk-interpretation danger-text">
+      Your responses suggest a <strong>high</strong> risk level. Please consult a physician
+      as soon as possible — early detection significantly improves outcomes.
+    </p>
+    {% endif %}
 
     <div class="progress-group" aria-label="Risk probabilities">
-      <div>
+      <div class="progress-item">
         <div class="progress-label">
           <span>Low risk</span>
-          <span>{{ percent_low }}%</span>
+          <span class="progress-pct">{{ percent_low }}%</span>
         </div>
-        <div
-          class="progress"
-          role="progressbar"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow="{{ percent_low }}"
-        >
-          <div
-            class="progress-bar progress-bar--low"
-            style="width: {{ percent_low }}%"
-          ></div>
+        <div class="progress" role="progressbar"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent_low }}">
+          <div class="progress-bar progress-bar--low" style="width:0"
+               data-target="{{ percent_low }}"></div>
         </div>
       </div>
-      <div>
+      <div class="progress-item">
         <div class="progress-label">
           <span>Medium risk</span>
-          <span>{{ percent_medium }}%</span>
+          <span class="progress-pct">{{ percent_medium }}%</span>
         </div>
-        <div
-          class="progress"
-          role="progressbar"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow="{{ percent_medium }}"
-        >
-          <div
-            class="progress-bar progress-bar--medium"
-            style="width: {{ percent_medium }}%"
-          ></div>
+        <div class="progress" role="progressbar"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent_medium }}">
+          <div class="progress-bar progress-bar--medium" style="width:0"
+               data-target="{{ percent_medium }}"></div>
         </div>
       </div>
-      <div>
+      <div class="progress-item">
         <div class="progress-label">
           <span>High risk</span>
-          <span>{{ percent_high }}%</span>
+          <span class="progress-pct">{{ percent_high }}%</span>
         </div>
-        <div
-          class="progress"
-          role="progressbar"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow="{{ percent_high }}"
-        >
-          <div
-            class="progress-bar progress-bar--high"
-            style="width: {{ percent_high }}%"
-          ></div>
+        <div class="progress" role="progressbar"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent_high }}">
+          <div class="progress-bar progress-bar--high" style="width:0"
+               data-target="{{ percent_high }}"></div>
         </div>
       </div>
     </div>
 
     <div class="results-actions">
-      <a class="btn btn-secondary" href="{{ url_for('form') }}"
-        >Retake assessment</a
-      >
+      <a class="btn btn-secondary" href="{{ url_for('form') }}">Retake assessment</a>
       {% if patient_id %}
-      <a
-        class="btn btn-outline"
-        href="{{ url_for('history', patient_id=patient_id) }}"
-        >View my history</a
-      >
-      <a
-        class="btn btn-ghost"
-        href="{{ url_for('download_pdf', patient_id=patient_id) }}"
-        >Download PDF</a
-      >
+      <a class="btn btn-outline" href="{{ url_for('history', patient_id=patient_id) }}">View history</a>
+      <a class="btn btn-ghost" href="{{ url_for('download_pdf', patient_id=patient_id) }}">Download PDF</a>
       {% endif %}
+      <button class="btn btn-outline" id="copyLinkBtn" title="Copy a shareable link to this page">
+        Copy link
+      </button>
     </div>
   </article>
 
   {% if advice %}
   <aside class="advice-card">
     <h2>Personal recommendations</h2>
-    <p class="results-subtitle" style="margin-bottom: 16px">
-      These tips are generated from the most prominent risk contributors in your
-      answers.
+    <p class="results-subtitle" style="margin-bottom:16px">
+      Generated from the most prominent risk contributors in your answers.
     </p>
-    <ul>
+    <ul class="advice-list">
       {% for item in advice %}
       <li>{{ item }}</li>
       {% endfor %}
@@ -103,25 +103,43 @@
   </aside>
   {% endif %}
 
-  <aside class="advice-card" style="background: rgba(37, 99, 235, 0.08)">
+  <aside class="advice-card calm-card">
     <h2>Take a mindful pause</h2>
     <p>
-      Feeling anxious? Explore calming breathing sessions curated for lung
-      health advocates.
-      <a
-        href="https://www.youtube.com/results?search_query=guided+breathing+exercises"
-        target="_blank"
-        rel="noopener"
-        >Open breathing exercises</a
-      >
+      Feeling anxious? Explore calming breathing sessions curated for lung health advocates.
+      <a href="https://www.youtube.com/results?search_query=guided+breathing+exercises"
+         target="_blank" rel="noopener">Open breathing exercises</a>
       or learn directly from
-      <a
-        href="https://www.youtube.com/@cancerdocadem/featured"
-        target="_blank"
-        rel="noopener"
-        >Dr Adem&rsquo;s channel</a
-      >.
+      <a href="https://www.youtube.com/@cancerdocadem/featured"
+         target="_blank" rel="noopener">Dr Adem&rsquo;s channel</a>.
     </p>
   </aside>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Animate progress bars ────────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.progress-bar[data-target]').forEach(bar => {
+      const target = parseFloat(bar.dataset.target);
+      requestAnimationFrame(() => {
+        setTimeout(() => { bar.style.width = target + '%'; }, 120);
+      });
+    });
+  });
+
+  // ── Copy link button ─────────────────────────────────────────────────────
+  document.getElementById('copyLinkBtn')?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      const btn = document.getElementById('copyLinkBtn');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    } catch {
+      alert('Could not copy link automatically. Please copy it from the address bar.');
+    }
+  });
+</script>
 {% endblock %}
