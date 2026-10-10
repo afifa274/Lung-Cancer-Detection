@@ -240,17 +240,31 @@ def form():
 
 @app.route('/debug')
 def debug():
-    """Shows model/scaler status — helpful for diagnosing Render issues."""
-    info = {
-        'model_loaded': model is not None,
-        'scaler_loaded': scaler is not None,
-        'model_type': str(type(model)),
-        'python_version': __import__('sys').version,
-        'cwd': os.getcwd(),
-        'files': os.listdir('.'),
-    }
-    lines = [f'<b>{k}</b>: {v}' for k, v in info.items()]
-    return '<br>'.join(lines), 200
+    """Shows model/scaler status and runs a test prediction."""
+    import sys
+    predict_ok = False
+    predict_err = ''
+    try:
+        test = scaler.transform(np.zeros((1, 23)))
+        out  = model.predict(test, verbose=0)
+        predict_ok = True
+        predict_result = str(out)
+    except Exception as ex:
+        predict_err = str(ex)
+        predict_result = ''
+
+    info = [
+        f'<b>model_loaded</b>: {model is not None}',
+        f'<b>scaler_loaded</b>: {scaler is not None}',
+        f'<b>model_type</b>: {type(model).__name__}',
+        f'<b>predict_ok</b>: {predict_ok}',
+        f'<b>predict_result</b>: {predict_result}',
+        f'<b>predict_error</b>: {predict_err}',
+        f'<b>python_version</b>: {sys.version}',
+        f'<b>cwd</b>: {os.getcwd()}',
+        f'<b>files</b>: {os.listdir(".")}',
+    ]
+    return '<br>'.join(info), 200
 
 @app.route('/results', methods=['GET', 'POST'])
 def results():
