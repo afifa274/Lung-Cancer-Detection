@@ -238,59 +238,73 @@ def about():
 def form():
     return render_template('form.html')
 
+@app.route('/debug')
+def debug():
+    """Shows model/scaler status — helpful for diagnosing Render issues."""
+    info = {
+        'model_loaded': model is not None,
+        'scaler_loaded': scaler is not None,
+        'model_type': str(type(model)),
+        'python_version': __import__('sys').version,
+        'cwd': os.getcwd(),
+        'files': os.listdir('.'),
+    }
+    lines = [f'<b>{k}</b>: {v}' for k, v in info.items()]
+    return '<br>'.join(lines), 200
+
 @app.route('/results', methods=['GET', 'POST'])
 def results():
     if request.method != 'POST':
         return redirect(url_for('home'))
 
+    # ── Model check ───────────────────────────────────────────────────────
     if model is None or scaler is None:
-        flash('The prediction model is not available. Please contact the administrator.', 'error')
+        return render_template('500.html',
+            error='The prediction model failed to load. Please try again later.'), 503
+
+    # ── Validate ──────────────────────────────────────────────────────────
+    values, errors = _validate_form(request.form)
+    if errors:
+        for err in errors:
+            flash(err, 'error')
         return redirect(url_for('form'))
 
+    # ── Predict ───────────────────────────────────────────────────────────
     try:
-        values, errors = _validate_form(request.form)
-
-        if errors:
-            for err in errors:
-                flash(err, 'error')
-            return redirect(url_for('form'))
-
         outcome, pct_low, pct_medium, pct_high = _predict(values)
-
-        share_name   = request.form.get('share_name', 'no')
-        patient_name = (request.form.get('patient_name') or '').strip()
-        patient_id   = 'guest'
-
-        # CSV write — non-fatal (Render free tier has ephemeral filesystem)
-        try:
-            next_index = _next_index()
-            patient_id = patient_name if (share_name == 'yes' and patient_name) else str(next_index)
-            row = [next_index, patient_id,
-                   values['age'], values['gender'],
-                   *[values[f] for f in _SCORE_FIELDS],
-                   outcome]
-            _append_row(row)
-            logger.info('Saved record patient_id=%s outcome=%s', patient_id, outcome)
-        except Exception as csv_err:
-            logger.warning('CSV write skipped: %s', csv_err)
-            patient_id = patient_name if (share_name == 'yes' and patient_name) else 'guest'
-
-        advice = _build_advice(values)
-        return render_template(
-            'results.html',
-            outcome=outcome,
-            percent_low=pct_low,
-            percent_medium=pct_medium,
-            percent_high=pct_high,
-            advice=advice,
-            patient_id=patient_id,
-            timestamp=datetime.now().strftime('%d %b %Y, %H:%M'),
-        )
-
     except Exception as e:
-        logger.exception('Unhandled error in /results: %s', e)
-        flash(f'Error processing your results: {e}', 'error')
-        return redirect(url_for('form'))
+        logger.exception('Prediction failed: %s', e)
+        return f'<h2>Prediction error</h2><pre>{e}</pre><a href="/form">Try again</a>', 500
+
+    # ── CSV save (non-fatal) ──────────────────────────────────────────────
+    share_name   = request.form.get('share_name', 'no')
+    patient_name = (request.form.get('patient_name') or '').strip()
+    patient_id   = 'guest'
+    try:
+        next_index = _next_index()
+        patient_id = patient_name if (share_name == 'yes' and patient_name) else str(next_index)
+        row = [next_index, patient_id,
+               values['age'], values['gender'],
+               *[values[f] for f in _SCORE_FIELDS],
+               outcome]
+        _append_row(row)
+        logger.info('Saved record patient_id=%s outcome=%s', patient_id, outcome)
+    except Exception as csv_err:
+        logger.warning('CSV write skipped: %s', csv_err)
+        patient_id = patient_name if (share_name == 'yes' and patient_name) else 'guest'
+
+    # ── Render results ────────────────────────────────────────────────────
+    advice = _build_advice(values)
+    return render_template(
+        'results.html',
+        outcome=outcome,
+        percent_low=pct_low,
+        percent_medium=pct_medium,
+        percent_high=pct_high,
+        advice=advice,
+        patient_id=patient_id,
+        timestamp=datetime.now().strftime('%d %b %Y, %H:%M'),
+    )
 
 
 @app.route('/history/<patient_id>')

@@ -4,9 +4,10 @@
 <section class="error-page">
   <div class="error-code">500</div>
   <h1>Something went wrong</h1>
-  <p>An unexpected error occurred on the server. Please try again in a moment.</p>
+  <p>{{ error if error else 'An unexpected error occurred on the server. Please try again in a moment.' }}</p>
   <div class="results-actions" style="justify-content:center">
-    <a class="btn btn-primary" href="{{ url_for('home') }}">Go home</a>
+    <a class="btn btn-primary" href="{{ url_for('form') }}">Try again</a>
+    <a class="btn btn-ghost" href="{{ url_for('home') }}">Go home</a>
   </div>
 </section>
 {% endblock %}
