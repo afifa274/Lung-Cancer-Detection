@@ -28,8 +28,8 @@ app.secret_key = os.environ.get('SECRET_KEY', 'change-me-in-production-please')
 
 # ── Load model & scaler ───────────────────────────────────────────────────────
 try:
-    import tensorflow as tf
-    model = tf.keras.models.load_model('cancer_snus_model.h5')
+    from tensorflow import keras as _keras
+    model = _keras.models.load_model('cancer_snus_model.h5')
     logger.info('Model loaded successfully.')
 except Exception as exc:
     logger.error('Failed to load model: %s', exc)
