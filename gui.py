@@ -27,21 +27,65 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'change-me-in-production-please')
 
 # ── Load model & scaler ───────────────────────────────────────────────────────
-try:
+def _load_or_retrain():
+    """Try to load the saved model; if it fails, retrain from scratch."""
+    import pickle as _pickle
+    import numpy as _np
+    import pandas as _pd
+    from sklearn.model_selection import train_test_split as _tts
+    from sklearn.preprocessing import StandardScaler as _SS
     from tensorflow import keras as _keras
-    model = _keras.models.load_model('cancer_snus_model.h5')
-    logger.info('Model loaded successfully.')
-except Exception as exc:
-    logger.error('Failed to load model: %s', exc)
-    model = None
+    from tensorflow.keras.models import Sequential as _Seq
+    from tensorflow.keras.layers import Dense as _Dense, Dropout as _Drop, BatchNormalization as _BN
+
+    # ── Try loading existing artefacts ────────────────────────────────────
+    try:
+        _m = _keras.models.load_model('cancer_snus_model.h5')
+        with open('scaler.pkl', 'rb') as _f:
+            _sc = _pickle.load(_f)
+        # quick sanity-check: predict on a dummy input
+        _m.predict(_np.zeros((1, 23)), verbose=0)
+        logger.info('Model and scaler loaded from disk.')
+        return _m, _sc
+    except Exception as _e:
+        logger.warning('Could not load model (%s) — retraining now...', _e)
+
+    # ── Retrain ───────────────────────────────────────────────────────────
+    _df = _pd.read_csv('cancer patient data sets.csv')
+    if _df['Level'].dtype == object:
+        _df['Level'] = _df['Level'].map({'Low': 0, 'Medium': 1, 'High': 2})
+    _X = _df.iloc[:, 2:-1].values
+    _y = _df.iloc[:, -1].values.astype(int)
+    _sc = _SS()
+    _X = _sc.fit_transform(_X)
+    _X_tr, _X_te, _y_tr, _y_te = _tts(_X, _y, test_size=0.2, random_state=42, stratify=_y)
+
+    _m = _Seq([
+        _Dense(128, activation='relu', input_dim=23),
+        _BN(), _Drop(0.3),
+        _Dense(64, activation='relu'),
+        _BN(), _Drop(0.2),
+        _Dense(32, activation='relu'),
+        _Dense(3, activation='softmax'),
+    ])
+    _m.compile(optimizer=_keras.optimizers.Adam(1e-3),
+               loss='categorical_crossentropy', metrics=['accuracy'])
+    _m.fit(_X_tr, _keras.utils.to_categorical(_y_tr, 3),
+           epochs=60, batch_size=32,
+           validation_data=(_X_te, _keras.utils.to_categorical(_y_te, 3)),
+           callbacks=[_keras.callbacks.EarlyStopping(patience=10, restore_best_weights=True)],
+           verbose=0)
+    _m.save('cancer_snus_model.h5')
+    with open('scaler.pkl', 'wb') as _f:
+        _pickle.dump(_sc, _f)
+    logger.info('Model retrained and saved successfully.')
+    return _m, _sc
 
 try:
-    with open('scaler.pkl', 'rb') as _f:
-        scaler = pickle.load(_f)
-    logger.info('Scaler loaded successfully.')
+    model, scaler = _load_or_retrain()
 except Exception as exc:
-    logger.error('Failed to load scaler: %s', exc)
-    scaler = None
+    logger.error('Fatal: could not load or retrain model: %s', exc)
+    model, scaler = None, None
 
 # ── CSV helpers ───────────────────────────────────────────────────────────────
 CSV_PATH = 'user_inputs.csv'

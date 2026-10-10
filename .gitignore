@@ -1,5 +1,6 @@
 venv/
 __pycache__/
 report.pdf
-sacler.pkl
-cacner_snus_model.h5
+*.pyc
+.env
+
