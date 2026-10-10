@@ -236,38 +236,49 @@ def results():
         flash('The prediction model is not available. Please contact the administrator.', 'error')
         return redirect(url_for('form'))
 
-    values, errors = _validate_form(request.form)
-    if errors:
-        for err in errors:
-            flash(err, 'error')
+    try:
+        values, errors = _validate_form(request.form)
+        if errors:
+            for err in errors:
+                flash(err, 'error')
+            return redirect(url_for('form'))
+
+        outcome, pct_low, pct_medium, pct_high = _predict(values)
+
+        share_name   = request.form.get('share_name')
+        patient_name = (request.form.get('patient_name') or '').strip()
+
+        # CSV persistence — non-fatal: read-only filesystems (e.g. Render free) skip silently
+        patient_id = 'anonymous'
+        try:
+            next_index = _next_index()
+            patient_id = patient_name if (share_name == 'yes' and patient_name) else str(next_index)
+            row = [next_index, patient_id,
+                   values['age'], values['gender'],
+                   *[values[f] for f in _SCORE_FIELDS],
+                   outcome]
+            _append_row(row)
+            logger.info('Saved result for patient_id=%s outcome=%s', patient_id, outcome)
+        except Exception as csv_err:
+            logger.warning('Could not save to CSV (read-only fs?): %s', csv_err)
+            patient_id = patient_name if (share_name == 'yes' and patient_name) else 'guest'
+
+        advice = _build_advice(values)
+
+        return render_template(
+            'results.html',
+            outcome=outcome,
+            percent_low=pct_low,
+            percent_medium=pct_medium,
+            percent_high=pct_high,
+            advice=advice,
+            patient_id=patient_id,
+            timestamp=datetime.now().strftime('%d %b %Y, %H:%M'),
+        )
+    except Exception as e:
+        logger.exception('Error in /results: %s', e)
+        flash('Something went wrong processing your results. Please try again.', 'error')
         return redirect(url_for('form'))
-
-    outcome, pct_low, pct_medium, pct_high = _predict(values)
-
-    share_name   = request.form.get('share_name')
-    patient_name = (request.form.get('patient_name') or '').strip()
-    next_index   = _next_index()
-    patient_id   = patient_name if (share_name == 'yes' and patient_name) else str(next_index)
-
-    row = [next_index, patient_id,
-           values['age'], values['gender'],
-           *[values[f] for f in _SCORE_FIELDS],
-           outcome]
-    _append_row(row)
-    logger.info('Saved result for patient_id=%s outcome=%s', patient_id, outcome)
-
-    advice = _build_advice(values)
-
-    return render_template(
-        'results.html',
-        outcome=outcome,
-        percent_low=pct_low,
-        percent_medium=pct_medium,
-        percent_high=pct_high,
-        advice=advice,
-        patient_id=patient_id,
-        timestamp=datetime.now().strftime('%d %b %Y, %H:%M'),
-    )
 
 @app.route('/history/<patient_id>')
 def history(patient_id):
