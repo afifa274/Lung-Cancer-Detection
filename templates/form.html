@@ -30,7 +30,7 @@
   <form method="POST" action="{{ url_for('results') }}" novalidate id="assessmentForm">
 
     <!-- ── Section 0: Identity ───────────────────────────────────────── -->
-    <div class="form-section" data-section="0">
+    <div class="form-section" data-section="0" style="display:block">
       <h2>Identity</h2>
       <div class="form-grid">
         <div class="input-group" role="radiogroup" aria-labelledby="share-label">
@@ -72,7 +72,7 @@
     </div>
 
     <!-- ── Section 1: Lifestyle ──────────────────────────────────────── -->
-    <div class="form-section hidden" data-section="1">
+    <div class="form-section" data-section="1" style="display:none">
       <h2>Lifestyle &amp; Environment</h2>
       <p class="input-description">
         Score each factor by how strongly it applies to you — 1 is minimal and 9 is severe or very frequent.
@@ -113,7 +113,7 @@
     </div>
 
     <!-- ── Section 2: Symptoms ───────────────────────────────────────── -->
-    <div class="form-section hidden" data-section="2">
+    <div class="form-section" data-section="2" style="display:none">
       <h2>Symptoms &amp; Observations</h2>
       <p class="input-description">Rate the severity or frequency of each symptom you experience.</p>
       <div class="form-grid">
@@ -179,7 +179,8 @@
   let current = 0;
 
   const showSection = (idx) => {
-    sections.forEach((s, i) => s.classList.toggle('hidden', i !== idx));
+    // Use style.display so hidden inputs are still submitted with the form
+    sections.forEach((s, i) => { s.style.display = (i === idx) ? 'block' : 'none'; });
     steps.forEach((s, i) => {
       s.classList.toggle('is-active', i === idx);
       s.classList.toggle('is-done',   i < idx);
@@ -195,12 +196,13 @@
     btn.addEventListener('click', () => { if (current > 0) showSection(current - 1); });
   });
 
-  // ── Submit spinner ────────────────────────────────────────────────────────
-  document.getElementById('assessmentForm').addEventListener('submit', () => {
+  // ── Submit spinner (delay disable so form data is sent first) ────────────
+  document.getElementById('assessmentForm').addEventListener('submit', (e) => {
     const btn = document.getElementById('submitBtn');
     if (btn) {
-      btn.disabled = true;
+      // Show spinner immediately but only disable after a short delay
       btn.classList.add('is-loading');
+      setTimeout(() => { btn.disabled = true; }, 300);
     }
   });
 </script>
